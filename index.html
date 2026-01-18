@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТЗ на подбор автомобиля</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* --- ОСНОВНЫЕ СТИЛИ (ДЛЯ ЭКРАНА ТЕЛЕФОНА/КОМПА) --- */
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #f4f7f6;
+            --text-color: #333;
+            --border-color: #ccc;
+            --budget-color: #0d47a1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.4;
+            color: var(--text-color);
+            background-color: #e9ecef;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+        .logo-img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .section-block { margin-bottom: 20px; }
+
+        h2 {
+            background-color: var(--secondary-color);
+            padding: 8px 15px;
+            border-left: 5px solid var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 480px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        .form-group { margin-bottom: 10px; }
+        .form-group.full-width { grid-column: 1 / -1; }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        textarea { resize: vertical; height: 60px; }
+
+        .budget-block {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #bbdefb;
+        }
+        .budget-label { font-size: 1.1rem; color: var(--budget-color); margin-bottom: 8px; }
+        .budget-input { font-weight: bold; font-size: 1.1rem; color: var(--budget-color); }
+
+        .required { color: red; }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .btn {
+            padding: 15px 30px;
+            border: none; border-radius: 5px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white;
+            width: 100%; max-width: 300px;
+        }
+        .btn-pdf { background-color: var(--primary-color); }
+        .btn-pdf:disabled { background-color: #999; cursor: wait; }
+
+        /* --- СТИЛИ ИСКЛЮЧИТЕЛЬНО ДЛЯ ГЕНЕРАЦИИ PDF --- */
+        /* Этот блок не виден на экране, он используется только для создания PDF */
+        #clone-container {
+            position: absolute;
+            top: -9999px;
+            left: 0; 
+        }
+
+        /* Жесткая фиксация ширины для PDF - это решит проблему с компа */
+        .pdf-mode {
+            width: 750px !important; /* Ширина A4 при 96dpi примерно 794px, берем с запасом */
+            padding: 20px 40px !important; /* Отступы внутри листа */
+            background: white !important;
+            box-sizing: border-box !important;
+        }
+
+        .pdf-mode .logo-container { text-align: center; margin-bottom: 20px; }
+        .pdf-mode .logo-img { max-width: 250px; } /* Логотип крупнее и четче в PDF */
+
+        .pdf-mode .form-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important; /* Всегда 2 колонки в PDF */
+            gap: 15px !important;
+        }
+        .pdf-mode .form-group.full-width { grid-column: 1 / -1 !important; }
+
+        /* Превращаем инпуты в красивый текст */
+        .pdf-mode input, .pdf-mode select, .pdf-mode textarea {
+            display: none !important; /* Скрываем настоящие инпуты */
+        }
+        
+        .pdf-text-value {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            color: #000;
+            font-weight: 600;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            min-height: 20px;
+            white-space: pre-wrap; /* Сохраняет переносы строк из textarea */
+        }
+        
+        /* Исправление бюджета */
+        .pdf-mode .budget-block {
+            background: #f0f7ff !important;
+            border: 2px solid #0d47a1 !important;
+            padding: 10px !important;
+        }
+        .pdf-mode .budget-label {
+            color: #0d47a1 !important;
+            font-size: 14px !important;
+            margin-bottom: 5px !important;
+        }
+        .pdf-text-value.budget-val {
+            color: #0d47a1 !important;
+            font-size: 18px !important; /* Крупно, но не гигантски */
+            font-weight: 800 !important;
+            border: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Видимая форма для заполнения -->
+<div class="container" id="printable-area">
+    <div class="logo-container">
+        <img src="logo.png" alt="Pard Auto" class="logo-img" crossorigin="anonymous">
+    </div>
+
+    <h1>Техническое Задание на подбор автомобиля</h1>
+
+    <div class="section-block">
+        <h2>1. Данные запроса</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="managerName">Менеджер: <span class="required">*</span></label>
+                <select id="managerName" required>
+                    <option value="" disabled selected>Выберите...</option>
+                    <option value="Артем">Артем</option>
+                    <option value="Максим">Максим</option>
+                    <option value="Роман">Роман</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="requestDate">Дата запроса:</label>
+                <input type="text" id="requestDate" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-block">
+        <h2>2. Данные клиента</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="clientFIO">ФИО Клиента: <span class="required">*</span></label>
+                <input type="text" id="clientFIO" placeholder="Иванов Иван Иванович" required>
+            </div>
+            <div class="form-group">
+                <label for="clientPhone">Телефон:</label>
+                <input type="text" id="clientPhone" placeholder="+7 (999) 000-00-00">
+            </div>
+        </div>
+    </div>
+
+    <div class="section-block">
+        <h2>3. Параметры автомобиля</h2>
+        <div class="form-grid">
+            <div class="form-group full-width budget-block">
+                <label class="budget-label">🎯 Бюджет «под ключ» (РФ): <span class="required">*</span></label>
+                <input type="text" id="budget" class="budget-input" placeholder="Например: до 3 500 000 руб." required>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Марка и Модель: <span class="required">*</span></label>
+                <input type="text" id="carMakeModel" placeholder="Например: Kia Sorento" required>
+            </div>
+
+            <div class="form-group">
+                <label>Годы выпуска:</label>
+                <input type="text" id="carYears" placeholder="2020-2022">
+            </div>
+
+            <div class="form-group">
+                <label>Двигатель:</label>
+                <input type="text" id="engineType" placeholder="Дизель 2.2">
+            </div>
+            <div class="form-group">
+                <label>Привод:</label>
+                <select id="driveType">
+                    <option value="Не важно">Не важно</option>
+                    <option value="Полный (4WD/AWD)">Полный (4WD/AWD)</option>
+                    <option value="Передний (FWD)">Передний (FWD)</option>
+                    <option value="Задний (RWD)">Задний (RWD)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Коробка:</label>
+                <select id="transmission">
+                    <option value="Автомат (любой)">Автомат (любой)</option>
+                    <option value="Классический АКПП">Классический АКПП</option>
+                    <option value="Робот">Робот</option>
+                    <option value="Вариатор">Вариатор</option>
+                    <option value="Механика">Механика</option>
+                </select>
+            </div>
+             <div class="form-group">
+                <label>Пробег (км):</label>
+                <input type="text" id="maxMileage" placeholder="до 80 000">
+            </div>
+
+            <div class="form-group">
+                <label>Откуда привезти:</label>
+                <select id="importRegion">
+                    <option value="Не важно">Не важно</option>
+                    <option value="Китай">Китай</option>
+                    <option value="Корея">Корея</option>
+                    <option value="Европа">Европа</option>
+                    <option value="Япония">Япония</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Город доставки:</label>
+                <input type="text" id="deliveryCity" placeholder="Москва">
+            </div>
+
+            <div class="form-group">
+                <label>Растаможка:</label>
+                <select id="customsClearance">
+                    <option value="РФ">РФ</option>
+                    <option value="Киргизия">Киргизия</option>
+                    <option value="РБ">РБ</option>
+                </select>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Цвет (Кузов/Салон):</label>
+                <input type="text" id="colors" placeholder="Белый / Темный">
+            </div>
+            
+            <div class="form-group full-width">
+                <label>Важные опции (Must Have):</label>
+                <textarea id="mustHaves" placeholder="Панорама, вентиляция..."></textarea>
+            </div>
+
+            <div class="form-group full-width">
+                <label>Комментарии:</label>
+                <textarea id="additionalComments" placeholder="Любая другая информация."></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="btn-container">
+    <button class="btn btn-pdf" id="pdfBtn" onclick="generateSmartPDF()">Скачать / Отправить PDF</button>
+</div>
+
+<!-- Сюда будет помещаться копия для печати -->
+<div id="clone-container"></div>
+
+<script>
+    window.onload = function() {
+        const today = new Date();
+        document.getElementById('requestDate').value = today.toLocaleString('ru-RU', { 
+            year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+        });
+    };
+
+    function validateForm() {
+        const req = [
+            {id: 'managerName', msg: 'Выберите менеджера!'},
+            {id: 'clientFIO', msg: 'Укажите ФИО клиента!'},
+            {id: 'budget', msg: 'Укажите бюджет!'},
+            {id: 'carMakeModel', msg: 'Укажите марку авто!'}
+        ];
+        for (let item of req) {
+            let el = document.getElementById(item.id);
+            if (!el.value || !el.value.trim()) {
+                alert(item.msg); el.focus(); return false;
+            }
+        }
+        return true;
+    }
+
+    function getFileName() {
+        const manager = document.getElementById('managerName').value || 'Mngr';
+        const client = (document.getElementById('clientFIO').value || 'Client').trim().split(' ')[0];
+        const car = (document.getElementById('carMakeModel').value || 'Car').trim().split(' ').slice(0,2).join('_');
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('ru-RU').replace(/\./g, '-');
+        const timeStr = now.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'}).replace(/:/g, '-');
+        return `ТЗ_${manager}_${client}_${car}_${dateStr}_${timeStr}.pdf`;
+    }
+
+    // --- МАГИЯ: СОЗДАНИЕ ИДЕАЛЬНОЙ КОПИИ ---
+    function prepareClone() {
+        const original = document.getElementById('printable-area');
+        const cloneContainer = document.getElementById('clone-container');
+        cloneContainer.innerHTML = ''; 
+        
+        // Клонируем
+        const clone = original.cloneNode(true);
+        clone.classList.add('pdf-mode'); // Применяем жесткие стили
+        
+        // Превращаем поля в текст
+        const inputs = clone.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            const val = input.value || '';
+            const textDiv = document.createElement('div');
+            textDiv.textContent = val;
+            textDiv.className = 'pdf-text-value';
+            
+            if(input.id === 'budget' || input.classList.contains('budget-input')) {
+                textDiv.classList.add('budget-val');
+            }
+            
+            input.parentNode.replaceChild(textDiv, input);
+        });
+
+        cloneContainer.appendChild(clone);
+        return clone;
+    }
+
+    function generateSmartPDF() {
+        if (!validateForm()) return;
+
+        const btn = document.getElementById('pdfBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "Формирование...";
+        btn.disabled = true;
+
+        const elementToPrint = prepareClone();
+        const fileName = getFileName();
+
+        const opt = {
+            margin: [10, 10, 10, 10], // Отступы (мм)
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                logging: false,
+                scrollY: 0,
+                windowWidth: 800 // ЗАСТАВЛЯЕМ думать, что экран широкий
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(elementToPrint).output('blob').then(function(blob) {
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+            
+            // Если мобильный телефон и есть функция "Поделиться"
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'ТЗ на авто'
+                }).then(resetBtn).catch(() => {
+                    // Если отменили шаринг - просто качаем
+                    saveDirectly(opt, elementToPrint);
+                });
+            } else {
+                // Компьютер
+                saveDirectly(opt, elementToPrint);
+            }
+        }).catch(err => {
+            console.error(err);
+            saveDirectly(opt, elementToPrint); // Пробуем запасной вариант
+        });
+
+        function saveDirectly(options, el) {
+            html2pdf().set(options).from(el).save().then(resetBtn);
+        }
+
+        function resetBtn() {
+            btn.innerText = originalText;
+            btn.disabled = false;
+            document.getElementById('clone-container').innerHTML = '';
+        }
+    }
+</script>
+</body>
+</html>
