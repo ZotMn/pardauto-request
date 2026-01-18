@@ -1,0 +1,101 @@
+/* App.css */
+@import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
+
+body {
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.page-header { text-align: center; margin-bottom: 20px; }
+.logo { max-width: 180px; height: auto; display: block; margin: 0 auto; }
+
+h1 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 30px;
+  color: #1a1a1a;
+  border-bottom: 3px solid #2196F3;
+  padding-bottom: 15px;
+}
+
+.section { margin-bottom: 30px; }
+.section h2 {
+  font-size: 16px;
+  background: #2196F3;
+  color: white;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  margin-top: 0;
+}
+
+.form-group {
+  margin-bottom: 15px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* На мобильных делаем в одну колонку */
+@media (max-width: 600px) {
+  .form-group { grid-template-columns: 1fr; }
+}
+
+.form-group.full { grid-template-columns: 1fr; }
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+  font-size: 14px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box; /* Важно чтобы не вылезало */
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+
+.btn-primary {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  background: #2196F3;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.3s;
+}
+
+.btn-primary:hover { background: #1976D2; }
+
+/* Особые цвета для важных полей */
+.budget-input { color: #0066cc; font-weight: 700; background: #f0f8ff; }
+.date-input { background: #f9f9f9; color: #555; cursor: not-allowed; }
